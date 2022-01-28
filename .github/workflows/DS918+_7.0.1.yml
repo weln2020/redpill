@@ -1,0 +1,52 @@
+name: 构建DSM引导镜像
+
+on: workflow_dispatch
+
+jobs:
+  redpill:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 同步仓库
+        uses: actions/checkout@v2.1.0
+
+      - name: 安装环境
+        run: |
+          apt-get update && apt-get install --yes --no-install-recommends ca-certificates build-essential git libssl-dev curl cpio bspatch vim gettext bc bison flex dosfstools kmod jq
+
+      - name: 下载源码
+        run: |
+          root=`pwd` && mkdir redpill && mkdir apollolake && cd redpill
+          git clone --depth=1 https://github.com/RedPill-TTG/redpill-lkm.git
+          git clone -b develop --depth=1 https://github.com/jumkey/redpill-load.git
+
+      - name: 下载工具链
+        run: |
+          curl --location "https://sourceforge.net/projects/dsgpl/files/toolkit/DSM7.0/ds.apollolake-7.0.dev.txz/download" --redpill ds.apollolake-7.0.dev.txz
+          tar -C./apollolake/ -xf ds.apollolake-7.0.dev.txz usr/local/x86_64-pc-linux-gnu/x86_64-pc-linux-gnu/sys-root/usr/lib/modules/DSM-7.0/build
+
+      - name: 编译 redpill-lkm
+        run: |
+          cd redpill-lkm
+          make LINUX_SRC=../apollolake/usr/local/x86_64-pc-linux-gnu/x86_64-pc-linux-gnu/sys-root/usr/lib/modules/DSM-7.0/build dev-v7
+          read -a KVERS <<< "$(modinfo --field=vermagic redpill.ko)" && cp -fv redpill.ko ../redpill-load/ext/rp-lkm/redpill-linux-v${KVERS[0]}.ko || exit 1
+
+      - name: 编译 redpill-load
+        run: |
+          cd redpill-load
+          cp ${root}/DS918+.json ./user_config.json
+          cat ./user_config.json
+          # ./ext-manager.sh add https://github.com/jumkey/redpill-load/raw/develop/redpill-acpid/rpext-index.json
+          # ./ext-manager.sh add https://github.com/jumkey/redpill-load/raw/develop/redpill-virtio/rpext-index.json
+          # ./ext-manager.sh add https://github.com/jumkey/redpill-load/raw/develop/redpill-boot-wait/rpext-index.json
+          # ./ext-manager.sh add https://github.com/RedPill-TTG/redpill-boot-wait/raw/master/recipes/universal.json
+          # ./ext-manager.sh add https://github.com/RedPill-TTG/redpill-virtio/raw/master/recipes/ds918p_41890.json
+          # ./ext-manager.sh add https://raw.githubusercontent.com/pocopico/rp-ext/master/r8169/rpext-index.json
+          # ./ext-manager.sh add https://raw.githubusercontent.com/pocopico/rp-ext/master/r8169/releases/ds918p_42218.json
+          ./build-loader.sh 'DS918+' '7.0.1-42218'
+          cd images && ls
+
+      - name: 上传到Archive
+        uses: actions/upload-artifact@v2
+        with:
+          name: redpill-DS918P-7.0.1-loader
+          path: images/redpill-DS918+_7.0.1*.img
