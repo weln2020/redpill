@@ -1,0 +1,16 @@
+{
+  "extra_cmdline": {
+    "pid": "0x1666",
+    "vid": "0x0951",
+    "sn": "1780PDN002113",
+    "mac1": "0023248D536A",
+    "SataPortMap": "4",
+    "DiskIdxMap": "00"
+  },
+  "synoinfo": {
+          "internalportcfg" : "0xffff",
+          "maxdisks" : "16"
+},
+  "ramdisk_copy": {
+}
+}
