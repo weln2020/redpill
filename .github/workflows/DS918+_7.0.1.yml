@@ -17,7 +17,9 @@ jobs:
         run: |
           root=`pwd` && mkdir redpill && mkdir apollolake && cd redpill
           git clone --depth=1 https://github.com/RedPill-TTG/redpill-lkm.git
+          cd redpill-lkm && ls
           git clone -b develop --depth=1 https://github.com/jumkey/redpill-load.git
+          cd redpill-load && ls
 
       - name: 下载工具链
         run: |
