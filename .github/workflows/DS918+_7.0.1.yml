@@ -27,6 +27,7 @@ jobs:
       - name: 编译 redpill-lkm
         shell: bash
         run: |
+          cd apollolake/toolkit
           make LINUX_SRC=apollolake/toolkit/build clean
           make LINUX_SRC=apollolake/toolkit/build CROSS_COMPILE=apollolake/toolchain/x86_64-pc-linux-gnu/bin/x86_64-pc-linux-gnu- dev-v7
           read -a KVERS <<< "$(sudo modinfo --field=vermagic redpill.ko)" && cp -fv redpill.ko ~/redpill-load/ext/rp-lkm/redpill-linux-v${KVERS[0]}.ko || exit 1
