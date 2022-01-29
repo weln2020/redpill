@@ -12,25 +12,26 @@ jobs:
       - name: 安装环境
         run: |
           sudo apt-get update && sudo apt-get install --yes --no-install-recommends ca-certificates build-essential git libssl-dev curl cpio bspatch vim gettext bc bison flex dosfstools kmod jq
-
       - name: 下载源码
         run: |
           root=`pwd` && mkdir redpill && mkdir apollolake && cd redpill
           git clone --depth=1 https://github.com/RedPill-TTG/redpill-lkm.git
-          cd redpill-lkm && ls
           git clone -b develop --depth=1 https://github.com/jumkey/redpill-load.git
-          cd redpill-load && ls
-
       - name: 下载工具链
         run: |
-          curl --location "https://sourceforge.net/projects/dsgpl/files/toolkit/DSM7.0/ds.apollolake-7.0.dev.txz/download" --output ds.apollolake-7.0.dev.txz
-          tar -C./apollolake/ -xf ds.apollolake-7.0.dev.txz usr/local/x86_64-pc-linux-gnu/x86_64-pc-linux-gnu/sys-root/usr/lib/modules/DSM-7.0/build
-
+          wget -q https://sourceforge.net/projects/dsgpl/files/Tool%20Chain/DSM%207.0.0%20Tool%20Chains/Intel%20x86%20Linux%204.4.180%20%28Apollolake%29/apollolake-gcc750_glibc226_x86_64-GPL.txz
+          wget -q https://sourceforge.net/projects/dsgpl/files/toolkit/DSM7.0/ds.apollolake-7.0.dev.txz
+          tar -xf apollolake-gcc750_glibc226_x86_64-GPL.txz -C ~/apollolake/toolchain
+          tar -xf ds.apollolake-7.0.dev.txz -C ~/apollolake usr/local/x86_64-pc-linux-gnu/x86_64-pc-linux-gnu/sys-root/usr/lib/modules/DSM-7.0/
+          cp -rf ~/apollolake/usr/local/x86_64-pc-linux-gnu/x86_64-pc-linux-gnu/sys-root/usr/lib/modules/DSM-7.0/ ~/apollolake/toolkit
+          rm -rf ~/apollolake/usr
+          ~/apollolake/apollolake-DSM-7.0-toolchain/x86_64-pc-linux-gnu/bin/x86_64-pc-linux-gnu-gcc --version
+          
       - name: 编译 redpill-lkm
         run: |
-          make LINUX_SRC=../apollolake/usr/local/x86_64-pc-linux-gnu/x86_64-pc-linux-gnu/sys-root/usr/lib/modules/DSM-7.0/build dev-v7
-          read -a KVERS <<< "$(sudo modinfo --field=vermagic redpill.ko)" && cp -fv redpill.ko ../redpill-load/ext/rp-lkm/redpill-linux-v${KVERS[0]}.ko || exit 1
-
+          make LINUX_SRC=~/.toolchain/apollolake-DSM-7.0-toolkit/build clean
+          make LINUX_SRC=~/.toolchain/apollolake-DSM-7.0-toolkit/build CROSS_COMPILE=~/.toolchain/apollolake-DSM-7.0-toolchain/x86_64-pc-linux-gnu/bin/x86_64-pc-linux-gnu- dev-v7
+          read -a KVERS <<< "$(sudo modinfo --field=vermagic redpill.ko)" && cp -fv redpill.ko ~/redpill-load/ext/rp-lkm/redpill-linux-v${KVERS[0]}.ko || exit 1
       - name: 编译 redpill-load
         run: |
           cd redpill-load
@@ -45,7 +46,6 @@ jobs:
           # ./ext-manager.sh add https://raw.githubusercontent.com/pocopico/rp-ext/master/r8169/releases/ds918p_42218.json
           ./build-loader.sh 'DS918+' '7.0.1-42218'
           cd images && ls
-
       - name: 上传到Archive
         uses: actions/upload-artifact@v2
         with:
