@@ -17,12 +17,12 @@ jobs:
           root=`pwd` && mkdir redpill && mkdir -p apollolake/toolchain && cd redpill
           git clone --depth=1 https://github.com/RedPill-TTG/redpill-lkm.git
           git clone -b develop --depth=1 https://github.com/jumkey/redpill-load.git
+      - name: 编译 redpill-lkm
+        run: |
           wget -q https://sourceforge.net/projects/dsgpl/files/Tool%20Chain/DSM%207.0.0%20Tool%20Chains/Intel%20x86%20Linux%204.4.180%20%28Apollolake%29/apollolake-gcc750_glibc226_x86_64-GPL.txz
           wget -q https://sourceforge.net/projects/dsgpl/files/toolkit/DSM7.0/ds.apollolake-7.0.dev.txz
           tar -xf apollolake-gcc750_glibc226_x86_64-GPL.txz -C apollolake/toolchain
           tar -xf ds.apollolake-7.0.dev.txz -C apollolake usr/local/x86_64-pc-linux-gnu/x86_64-pc-linux-gnu/sys-root/usr/lib/modules/DSM-7.0/
-      - name: 编译 redpill-lkm
-        run: |
           cp -rf apollolake/usr/local/x86_64-pc-linux-gnu/x86_64-pc-linux-gnu/sys-root/usr/lib/modules/DSM-7.0/ apollolake/toolkit && rm -rf apollolake/usr
           make LINUX_SRC=apollolake/toolkit/build clean
           make LINUX_SRC=apollolake/toolkit/build CROSS_COMPILE=apollolake/toolchain/x86_64-pc-linux-gnu/bin/x86_64-pc-linux-gnu- dev-v7
